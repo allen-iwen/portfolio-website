@@ -1,0 +1,9 @@
+"" 
+# 排除依赖目录
+node_modules/
+# 排除构建产物
+dist/
+build/
+# 排除临时文件
+*.log
+.DS_Store
