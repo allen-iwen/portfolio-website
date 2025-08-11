@@ -1,32 +1,28 @@
-name: Deploy to GitHub Pages
+name: Deploy GitHub Pages
 on:
- push:
- branches: [ main ]
- pull_request:
- branches: [ main ]
+  push:
+    branches: [ main ]  # 推送到 main 分支触发
 jobs:
- build-and-deploy:
- runs-on: ubuntu-latest
- 
- steps:
- - name: Checkout 🛎
- uses: actions/checkout@v4
- 
- - name: Setup Node.js 🔧
- uses: actions/setup-node@v4
- with:
- node-version: '18'
- cache: 'npm'
- 
- - name: Install dependencies 📦
- run: npm ci
- 
- - name: Build 🔨
- run: npm run build
- 
- - name: Deploy to GitHub Pages 🚀
- uses: peaceiris/actions-gh-pages@v3
- if: github.ref == 'refs/heads/main'
- with:
- github_token: ${{ secrets.GITHUB_TOKEN }}
- publish_dir: ./dist
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18  # 或你的 Node 版本
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm install  # 或 pnpm install
+
+      - name: 构建项目
+        run: npm run build  # 生成 dist 文件夹
+
+      - name: 部署到 Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist  # 部署 dist 里的静态文件
