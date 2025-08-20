@@ -73,7 +73,17 @@ function App() {
         tech: ["Flask", "MySQL", "Vue.js", "Redis", "JWT"],
         highlights: ["RESTful API架构", "RBAC权限管理", "响应时间提升40%"],
         image: flaskDashboard,
-        category: "全栈开发"
+        category: "全栈开发",
+        githubUrl: "https://github.com/allen-iwen/flask-ecommerce-admin"
+      },
+      {
+        title: "Tornado高并发论坛系统",
+        description: "基于Tornado异步框架的高并发论坛系统，支持实时聊天、帖子管理、用户互动等功能",
+        tech: ["Tornado", "MongoDB", "WebSocket", "Vue.js"],
+        highlights: ["万级并发连接", "WebSocket实时消息推送", "MongoDB查询优化", "完整REST API"],
+        image: codeInterface,
+        category: "全栈开发",
+        githubUrl: "https://github.com/allen-iwen/Tornado-Project"
       },
       {
         title: "Django在线教育平台",
@@ -81,7 +91,8 @@ function App() {
         tech: ["Django", "Python", "HTML/CSS/JS"],
         highlights: ["完整的教育业务流程", "支付系统集成"],
         image: codeInterface,
-        category: "Web开发"
+        category: "Web开发",
+        githubUrl: "https://github.com/your-username/django-online-education"
       }
     ],
     ai: [
@@ -91,7 +102,8 @@ function App() {
         tech: ["BERT", "XGBoost", "Python", "JIRA API"],
         highlights: ["准确率87.3%", "响应时间165ms", "工单处理效率提升60%"],
         image: aiVisualization,
-        category: "AI系统"
+        category: "AI系统",
+        githubUrl: "https://github.com/your-username/issue-resolution-predictor"
       },
       {
         title: "多Agent协同数据分析平台",
@@ -99,7 +111,8 @@ function App() {
         tech: ["Python", "多个LLM", "Streamlit", "数据可视化"],
         highlights: ["多Agent协作", "处理效率提升60%", "智能数据清洗"],
         image: multiAgentPlatform,
-        category: "AI系统"
+        category: "AI系统",
+        githubUrl: "https://github.com/your-username/multi-agent-data-analysis"
       },
       {
         title: "股票短线精灵",
@@ -107,7 +120,8 @@ function App() {
         tech: ["LSTM", "XGBoost", "Python", "金融数据API"],
         highlights: ["预测准确率68%", "实时预测", "量化交易策略"],
         image: stockPrediction,
-        category: "金融科技"
+        category: "金融科技",
+        githubUrl: "https://github.com/your-username/stock-short-term-predictor"
       }
     ]
   }
@@ -548,52 +562,112 @@ def handle_users():
                   whileHover={{ y: -5 }}
                   className="group"
                 >
-                  <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
-                    <div className="relative h-48 overflow-hidden">
-                      <img 
-                        src={project.image} 
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                      <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
-                        {project.category}
-                      </Badge>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
-                        {project.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-400">
-                        {project.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {project.tech.map((tech, techIndex) => (
-                              <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
-                                {tech}
-                              </Badge>
-                            ))}
+                  {project.githubUrl ? (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg"
+                      aria-label={`打开 ${project.title} 的 GitHub 仓库`}
+                    >
+                      <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden cursor-pointer">
+                        <div className="relative h-48 overflow-hidden">
+                          <img 
+                            src={project.image} 
+                            alt={project.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
+                          <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
+                            {project.category}
+                          </Badge>
+                          <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ExternalLink className="w-4 h-4 text-white" />
                           </div>
                         </div>
-                        <div>
-                          <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
-                          <ul className="text-sm text-gray-400 space-y-1">
-                            {project.highlights.map((highlight, highlightIndex) => (
-                              <li key={highlightIndex} className="flex items-start space-x-2">
-                                <span className="text-blue-400 mt-1">•</span>
-                                <span>{highlight}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <CardHeader>
+                          <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
+                            {project.title}
+                          </CardTitle>
+                          <CardDescription className="text-gray-400">
+                            {project.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {project.tech.map((tech, techIndex) => (
+                                  <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
+                                    {tech}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
+                              <ul className="text-sm text-gray-400 space-y-1">
+                                {project.highlights.map((highlight, highlightIndex) => (
+                                  <li key={highlightIndex} className="flex items-start space-x-2">
+                                    <span className="text-blue-400 mt-1">•</span>
+                                    <span>{highlight}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </a>
+                  ) : (
+                    <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={project.image} 
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
+                        <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
+                          {project.category}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <CardHeader>
+                        <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
+                          {project.title}
+                        </CardTitle>
+                        <CardDescription className="text-gray-400">
+                          {project.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {project.tech.map((tech, techIndex) => (
+                                <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
+                                  {tech}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
+                            <ul className="text-sm text-gray-400 space-y-1">
+                              {project.highlights.map((highlight, highlightIndex) => (
+                                <li key={highlightIndex} className="flex items-start space-x-2">
+                                  <span className="text-blue-400 mt-1">•</span>
+                                  <span>{highlight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -624,52 +698,112 @@ def handle_users():
                   whileHover={{ y: -5 }}
                   className="group"
                 >
-                  <Card className="bg-slate-800/50 border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 overflow-hidden h-full">
-                    <div className="relative h-48 overflow-hidden">
-                      <img 
-                        src={project.image} 
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                      <Badge className="absolute top-4 right-4 bg-purple-500/80 text-white">
-                        {project.category}
-                      </Badge>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="text-xl text-purple-400 group-hover:text-purple-300 transition-colors">
-                        {project.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-400">
-                        {project.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h5 className="text-sm font-semibold text-purple-400 mb-2">技术栈</h5>
-                          <div className="flex flex-wrap gap-2">
-                            {project.tech.map((tech, techIndex) => (
-                              <Badge key={techIndex} variant="outline" className="text-xs border-purple-500/30 text-purple-300">
-                                {tech}
-                              </Badge>
-                            ))}
+                  {project.githubUrl ? (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg"
+                      aria-label={`打开 ${project.title} 的 GitHub 仓库`}
+                    >
+                      <Card className="bg-slate-800/50 border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 overflow-hidden h-full cursor-pointer">
+                        <div className="relative h-48 overflow-hidden">
+                          <img 
+                            src={project.image} 
+                            alt={project.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
+                          <Badge className="absolute top-4 right-4 bg-purple-500/80 text-white">
+                            {project.category}
+                          </Badge>
+                          <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ExternalLink className="w-4 h-4 text-white" />
                           </div>
                         </div>
-                        <div>
-                          <h5 className="text-sm font-semibold text-purple-400 mb-2">项目亮点</h5>
-                          <ul className="text-sm text-gray-400 space-y-1">
-                            {project.highlights.map((highlight, highlightIndex) => (
-                              <li key={highlightIndex} className="flex items-start space-x-2">
-                                <span className="text-purple-400 mt-1">•</span>
-                                <span>{highlight}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <CardHeader>
+                          <CardTitle className="text-xl text-purple-400 group-hover:text-purple-300 transition-colors">
+                            {project.title}
+                          </CardTitle>
+                          <CardDescription className="text-gray-400">
+                            {project.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <h5 className="text-sm font-semibold text-purple-400 mb-2">技术栈</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {project.tech.map((tech, techIndex) => (
+                                  <Badge key={techIndex} variant="outline" className="text-xs border-purple-500/30 text-purple-300">
+                                    {tech}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <h5 className="text-sm font-semibold text-purple-400 mb-2">项目亮点</h5>
+                              <ul className="text-sm text-gray-400 space-y-1">
+                                {project.highlights.map((highlight, highlightIndex) => (
+                                  <li key={highlightIndex} className="flex items-start space-x-2">
+                                    <span className="text-purple-400 mt-1">•</span>
+                                    <span>{highlight}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </a>
+                  ) : (
+                    <Card className="bg-slate-800/50 border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 overflow-hidden h-full">
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={project.image} 
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
+                        <Badge className="absolute top-4 right-4 bg-purple-500/80 text-white">
+                          {project.category}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <CardHeader>
+                        <CardTitle className="text-xl text-purple-400 group-hover:text-purple-300 transition-colors">
+                          {project.title}
+                        </CardTitle>
+                        <CardDescription className="text-gray-400">
+                          {project.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <h5 className="text-sm font-semibold text-purple-400 mb-2">技术栈</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {project.tech.map((tech, techIndex) => (
+                                <Badge key={techIndex} variant="outline" className="text-xs border-purple-500/30 text-purple-300">
+                                  {tech}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-semibold text-purple-400 mb-2">项目亮点</h5>
+                            <ul className="text-sm text-gray-400 space-y-1">
+                              {project.highlights.map((highlight, highlightIndex) => (
+                                <li key={highlightIndex} className="flex items-start space-x-2">
+                                  <span className="text-purple-400 mt-1">•</span>
+                                  <span>{highlight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </motion.div>
               ))}
             </div>
