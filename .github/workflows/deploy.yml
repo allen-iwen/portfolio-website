@@ -19,19 +19,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'pnpm'
-
-      - name: Enable Corepack and prepare pnpm 🧰
-        run: |
-          corepack enable
-          corepack prepare pnpm@10 --activate
-          pnpm -v
+          cache: 'npm'
 
       - name: Install dependencies ⬇️
-        run: pnpm install --frozen-lockfile=false
+        run: npm install
 
       - name: Build 🔨
-        run: pnpm run build
+        run: npm run build
 
       - name: Deploy to GitHub Pages 🚀
         uses: peaceiris/actions-gh-pages@v3
