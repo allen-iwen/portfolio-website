@@ -83,7 +83,8 @@ function App() {
         highlights: ["万级并发连接", "WebSocket实时消息推送", "MongoDB查询优化", "完整REST API"],
         image: codeInterface,
         category: "全栈开发",
-        githubUrl: "https://github.com/allen-iwen/Tornado-Project"
+        githubUrl: "https://github.com/allen-iwen/Tornado-Project",
+        demoUrl: "https://allen-iwen.github.io/Tornado-Project/"
       },
       {
         title: "Django在线教育平台",
@@ -562,7 +563,81 @@ def handle_users():
                   whileHover={{ y: -5 }}
                   className="group"
                 >
-                  {project.githubUrl ? (
+                  {project.demoUrl ? (
+                    <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={project.image} 
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
+                        <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
+                          {project.category}
+                        </Badge>
+                        <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ExternalLink className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
+                          {project.title}
+                        </CardTitle>
+                        <CardDescription className="text-gray-400">
+                          {project.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {project.tech.map((tech, techIndex) => (
+                                <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
+                                  {tech}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
+                            <ul className="text-sm text-gray-400 space-y-1">
+                              {project.highlights.map((highlight, highlightIndex) => (
+                                <li key={highlightIndex} className="flex items-start space-x-2">
+                                  <span className="text-blue-400 mt-1">•</span>
+                                  <span>{highlight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="pt-2 flex flex-wrap gap-3">
+                            {project.demoUrl && (
+                              <a
+                                href={project.demoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-2 rounded-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border border-blue-500/30 transition"
+                                aria-label={`打开 ${project.title} 的在线预览`}
+                              >
+                                <Globe className="w-4 h-4 mr-2" /> 在线预览
+                              </a>
+                            )}
+                            {project.githubUrl && (
+                              <a
+                                href={project.githubUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-2 rounded-md bg-slate-700/40 text-gray-200 hover:bg-slate-700/60 border border-slate-600/50 transition"
+                                aria-label={`打开 ${project.title} 的 GitHub 仓库`}
+                              >
+                                <Github className="w-4 h-4 mr-2" /> GitHub
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : project.githubUrl ? (
                     <a
                       href={project.githubUrl}
                       target="_blank"
