@@ -21,13 +21,14 @@ jobs:
           node-version: '18'
           cache: 'pnpm'
 
-      - name: Setup pnpm 📦
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+      - name: Enable Corepack and prepare pnpm 🧰
+        run: |
+          corepack enable
+          corepack prepare pnpm@10 --activate
+          pnpm -v
 
       - name: Install dependencies ⬇️
-        run: pnpm install
+        run: pnpm install --frozen-lockfile=false
 
       - name: Build 🔨
         run: pnpm run build
