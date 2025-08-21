@@ -107,13 +107,20 @@ function App() {
         githubUrl: "https://github.com/your-username/issue-resolution-predictor"
       },
       {
-        title: "多Agent协同数据分析平台",
-        description: "基于多个中文大语言模型的协同工作系统，实现全流程自动化分析",
-        tech: ["Python", "多个LLM", "Streamlit", "数据可视化"],
-        highlights: ["多Agent协作", "处理效率提升60%", "智能数据清洗"],
+        title: "2025-01 ~ 2024-12 多Agent协同数据分析平台",
+        description: "设计了多Agent协作架构，集成豆包、通义千问、DeepSeek三种大模型；构建数据清洗Agent、统计分析Agent、报告生成Agent的端到端自动化协同工作流；支持CSV/Excel/JSON多格式的数据处理管线，提供交互式Web界面实现实时分析与可视化。",
+        tech: ["Python", "异步编程", "豆包", "通义千问", "DeepSeek", "Pandas", "Matplotlib", "Plotly", "Streamlit"],
+        highlights: [
+          "多Agent协作架构，模型间任务编排与上下文共享",
+          "支持CSV/Excel/JSON的自动化处理流水线",
+          "交互式Web界面，支持实时数据分析与可视化展示",
+          "异步并发优化多模型调用，处理效率提升60%",
+          "智能数据清洗算法，自动识别并修复数据质量问题",
+          "集成Matplotlib与Plotly，生成专业分析报告"
+        ],
         image: multiAgentPlatform,
         category: "AI系统",
-        githubUrl: "https://github.com/your-username/multi-agent-data-analysis"
+        githubUrl: "https://github.com/allen-iwen/multi-agent-data-analysis.git"
       },
       {
         title: "股票短线精灵",
