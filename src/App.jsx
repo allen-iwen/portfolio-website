@@ -107,7 +107,7 @@ function App() {
         githubUrl: "https://github.com/your-username/issue-resolution-predictor"
       },
       {
-        title: "2025-01 ~ 2024-12 多Agent协同数据分析平台",
+        title: "多Agent协同数据分析平台",
         description: "设计了多Agent协作架构，集成豆包、通义千问、DeepSeek三种大模型；构建数据清洗Agent、统计分析Agent、报告生成Agent的端到端自动化协同工作流；支持CSV/Excel/JSON多格式的数据处理管线，提供交互式Web界面实现实时分析与可视化。",
         tech: ["Python", "异步编程", "豆包", "通义千问", "DeepSeek", "Pandas", "Matplotlib", "Plotly", "Streamlit"],
         highlights: [
