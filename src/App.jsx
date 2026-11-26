@@ -40,7 +40,7 @@ function sectionIndex(id) {
 
 function ExternalLink({ href, children }) {
   return (
-    <a className="site-link" href={href} target="_blank" rel="noopener noreferrer">
+    <a className="text-link" href={href} target="_blank" rel="noopener noreferrer">
       {children}
       <span aria-hidden="true"> ↗</span>
       <span className="sr-only">（在新标签页打开）</span>
@@ -48,10 +48,10 @@ function ExternalLink({ href, children }) {
   )
 }
 
-function Highlights({ items }) {
-  const brief = items.every((item) => item.length <= 20)
+function Points({ items }) {
+  const long = items.some((item) => item.length > 18)
   return (
-    <ul className={brief ? 'marks' : 'fact-list'}>
+    <ul className={long ? 'work-points is-long' : 'work-points'}>
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -59,36 +59,43 @@ function Highlights({ items }) {
   )
 }
 
-function Section({ id, index, title, intro, children }) {
-  return (
-    <section id={id} className="section" aria-labelledby={`${id}-title`}>
-      <div className="mx-auto max-w-[76rem] px-5 py-16 md:px-8 md:py-24">
-        <h2 id={`${id}-title`} className="serif section-title">
-          <span className="section-index">{index}</span>
-          {title}
-        </h2>
-        {intro ? <p className="mt-6 max-w-2xl text-base leading-8 text-muted md:text-lg">{intro}</p> : null}
-        <div className={intro ? 'mt-12 md:mt-14' : 'mt-10'}>{children}</div>
-      </div>
-    </section>
-  )
-}
-
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
   const [filter, setFilter] = useState('all')
+  const [live, setLive] = useState(0)
+  const [boardPaused, setBoardPaused] = useState(false)
+  const [motionOn, setMotionOn] = useState(true)
   const menuButtonRef = useRef(null)
+
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const saved = window.sessionStorage.getItem('portfolio-motion')
+    if (reduce || saved === 'off') setMotionOn(false)
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.motion = motionOn ? 'on' : 'off'
+  }, [motionOn])
+
+  useEffect(() => {
+    if (!motionOn || boardPaused || projects.length < 2) return undefined
+    const timer = window.setInterval(() => {
+      setLive((current) => (current + 1) % projects.length)
+    }, 2600)
+    return () => window.clearInterval(timer)
+  }, [motionOn, boardPaused])
 
   useEffect(() => {
     let frame = 0
     const update = () => {
       frame = 0
+      setScrolled(window.scrollY > 8)
       let current = ''
       for (const section of sections) {
         const element = document.getElementById(section.id)
-        if (!element) continue
-        if (element.getBoundingClientRect().top <= 100) current = section.id
+        if (element && element.getBoundingClientRect().top <= 120) current = section.id
       }
       setActiveSection(current)
     }
@@ -121,34 +128,38 @@ function App() {
     }
   }, [menuOpen])
 
+  const toggleMotion = () => {
+    setMotionOn((current) => {
+      const next = !current
+      window.sessionStorage.setItem('portfolio-motion', next ? 'on' : 'off')
+      return next
+    })
+  }
+
   const visibleCount = projects.filter((project) => filter === 'all' || project.group === filter).length
 
   return (
     <div>
       <a className="skip-link" href="#content">跳到主要内容</a>
-
-      <header className="site-header">
-        <div className="mx-auto flex h-full max-w-[76rem] items-center justify-between px-5 md:px-8">
-          <a href="#top" className="serif text-xl tracking-[-0.03em]">王同鹤</a>
-          <nav className="hidden lg:block" aria-label="页面章节">
-            <ul className="flex gap-7">
-              {sections.map((section) => (
-                <li key={section.id}>
-                  <a
-                    href={`#${section.id}`}
-                    className={activeSection === section.id ? 'nav-link is-on' : 'nav-link'}
-                    aria-current={activeSection === section.id ? 'location' : undefined}
-                  >
-                    {section.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+      <header className={scrolled ? 'site-header is-scrolled' : 'site-header'}>
+        <div className="header-inner">
+          <a className="wordmark" href="#top">王同鹤</a>
+          <nav className="nav-desktop" aria-label="页面章节">
+            {sections.map((section) => (
+              <a
+                key={section.id}
+                className={activeSection === section.id ? 'nav-link is-on' : 'nav-link'}
+                href={`#${section.id}`}
+                aria-current={activeSection === section.id ? 'location' : undefined}
+              >
+                {section.label}
+              </a>
+            ))}
           </nav>
           <button
             ref={menuButtonRef}
             type="button"
-            className="menu-button lg:hidden"
+            className="menu-button"
             aria-expanded={menuOpen}
             aria-controls="site-menu"
             onClick={() => setMenuOpen((open) => !open)}
@@ -160,282 +171,291 @@ function App() {
 
       {menuOpen ? (
         <nav id="site-menu" className="menu-panel" aria-label="页面章节">
-          <ul>
-            {sections.map((section) => (
-              <li key={section.id}>
-                <a
-                  className="menu-link"
-                  href={`#${section.id}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span>{section.label}</span>
-                  <span className="font-mono text-sm font-normal text-cinnabar">{section.index}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          {sections.map((section) => (
+            <a
+              key={section.id}
+              className="menu-link"
+              href={`#${section.id}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <span>{section.label}</span>
+              <span>{section.index}</span>
+            </a>
+          ))}
+          <button type="button" className="motion-toggle" aria-pressed={!motionOn} onClick={toggleMotion}>
+            {motionOn ? '静止动效' : '恢复动效'}
+          </button>
         </nav>
       ) : null}
 
       <main id="content">
-        <section id="top" aria-labelledby="masthead">
-          <div className="mx-auto max-w-[76rem] px-5 pb-8 pt-8 md:px-8 md:pb-10 md:pt-14">
-            <p className="eyebrow">作品集</p>
-            <h1 id="masthead" className="mast mt-3 whitespace-nowrap">
-              王同鹤
-              <span className="seal" aria-hidden="true" />
-            </h1>
-          </div>
-
-          <div className="ribbon">
-            <ul aria-label="专业方向">
-              {profile.roles.map((role, index) => (
-                <li key={role}>
-                  {index > 0 ? <span aria-hidden="true">/</span> : null}
-                  {role}
-                </li>
+        <section className="hero" id="top" aria-labelledby="masthead">
+          <div className="hero-copy">
+            <p className="kicker">作品集</p>
+            <h1 id="masthead" className="name">王同鹤</h1>
+            <div className="name-mark" aria-hidden="true" />
+            <ul className="roles">
+              {profile.roles.map((role) => (
+                <li key={role}>{role}</li>
               ))}
             </ul>
+            <p className="affiliation">{profile.education}</p>
+            <p className="lead">{profile.summary}</p>
+            <div className="hero-actions">
+              <a className="btn" href="#projects">查看作品</a>
+              <a className="text-link" href={`mailto:${profile.email}`}>写信</a>
+            </div>
           </div>
 
-          <div className="mx-auto grid max-w-[76rem] gap-10 px-5 py-10 md:px-8 md:py-14 lg:grid-cols-12 lg:gap-16">
-            <div className="lg:col-span-6">
-              <p className="lead max-w-xl">{profile.summary}</p>
-              <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 text-lg">
-                <a className="stamp" href="#projects">查看作品</a>
-                <a className="site-link" href="#contact">联系</a>
-              </div>
-            </div>
-            <nav className="lg:col-span-6" aria-label="作品目录">
-              <p className="eyebrow">目录</p>
-              <ol className="mt-3 border-t border-line">
-                {projects.map((project, index) => (
-                  <li key={project.id}>
-                    <a className="index-link" href={`#${project.id}`}>
-                      <span className="serif w-8 shrink-0 text-cinnabar">{pad(index)}</span>
-                      <span className="index-title min-w-0 flex-1 text-lg leading-snug">{project.title}</span>
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          </div>
-
-          <dl className="fact-grid mx-auto max-w-[76rem]">
-            <div>
-              <dt>教育</dt>
-              <dd>{profile.education}</dd>
-            </div>
-            <div>
-              <dt>邮箱</dt>
-              <dd>
-                <a className="site-link break-all" href={`mailto:${profile.email}`}>{profile.email}</a>
-              </dd>
-            </div>
-            <div>
-              <dt>作品</dt>
-              <dd>
-                <a className="serif text-4xl leading-none tracking-[-0.04em]" href="#projects">
-                  {pad(projects.length - 1)}
-                </a>
-              </dd>
-            </div>
-          </dl>
+          <nav
+            className="board"
+            aria-label="作品目录"
+            onMouseEnter={() => setBoardPaused(true)}
+            onMouseLeave={() => setBoardPaused(false)}
+            onFocus={() => setBoardPaused(true)}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setBoardPaused(false)
+            }}
+          >
+            <p className="board-watermark" aria-hidden="true">{pad(projects.length - 1)}</p>
+            <p className="board-head">
+              <span>目录</span>
+              <strong>{pad(projects.length - 1)}</strong>
+            </p>
+            {projects.map((project, index) => (
+              <a
+                key={project.id}
+                className={motionOn && !boardPaused && live === index ? 'board-row is-live' : 'board-row'}
+                href={`#${project.id}`}
+              >
+                <span className="board-no">{pad(index)}</span>
+                <span className="board-title">{project.title}</span>
+                <span className="board-cat">{project.category}</span>
+              </a>
+            ))}
+          </nav>
         </section>
 
-        <Section id="about" index={sectionIndex('about')} title="简介">
-          <p className="serif max-w-4xl text-[clamp(1.55rem,3vw,2.2rem)] leading-snug">{profile.about}</p>
-          <div className="mt-12 grid gap-12 lg:grid-cols-12 lg:gap-16">
-            <div className="lg:col-span-7">
-              <h3 className="eyebrow">核心优势</h3>
-              <ol className="mt-4">
-                {strengths.map((item, index) => (
-                  <li key={item.title} className="strength">
-                    <span className="serif text-cinnabar">{pad(index)}</span>
-                    <p className="leading-8">
-                      <strong className="serif text-2xl">{item.title}</strong>
-                      <span className="text-muted">：{item.detail}</span>
-                    </p>
+        <section className="section" id="about" aria-labelledby="about-title">
+          <div className="wrap">
+            <p className="section-kicker">{sectionIndex('about')}</p>
+            <div className="section-head">
+              <h2 id="about-title">简介</h2>
+            </div>
+            <p className="about-lead">{profile.about}</p>
+            <div className="about-grid">
+              <div>
+                <h3 className="subhead">核心优势</h3>
+                <div>
+                  {strengths.map((item) => (
+                    <div className="strength" key={item.title}>
+                      <strong>{item.title}：</strong>
+                      <span>{item.detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="about-aside">
+                <h3 className="subhead">个人信息</h3>
+                <dl className="meta-list">
+                  <div>
+                    <dt>教育</dt>
+                    <dd>{profile.education}</dd>
+                  </div>
+                  <div>
+                    <dt>所在</dt>
+                    <dd>{profile.location}</dd>
+                  </div>
+                  <div>
+                    <dt>邮箱</dt>
+                    <dd>
+                      <a className="text-link" href={`mailto:${profile.email}`}>{profile.email}</a>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>GitHub</dt>
+                    <dd><ExternalLink href={profile.github}>allen-iwen</ExternalLink></dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {experience.length > 0 ? (
+          <section className="section" id="experience" aria-labelledby="experience-title">
+            <div className="wrap">
+              <p className="section-kicker">{sectionIndex('experience')}</p>
+              <div className="section-head">
+                <h2 id="experience-title">经历</h2>
+              </div>
+              <ol className="timeline">
+                {experience.map((item) => (
+                  <li key={`${item.time ?? ''}-${item.role ?? ''}-${item.org ?? ''}`}>
+                    {item.time ? <p className="when">{item.time}</p> : null}
+                    <h3>{item.role}</h3>
+                    {item.org ? <p className="org">{item.org}</p> : null}
+                    {item.summary ? <p className="work-summary">{item.summary}</p> : null}
+                    {item.points?.length ? <Points items={item.points} /> : null}
                   </li>
                 ))}
               </ol>
             </div>
-            <div className="lg:col-span-5">
-              <h3 className="eyebrow">个人信息</h3>
-              <dl className="info-list mt-4">
-                <div>
-                  <dt>教育</dt>
-                  <dd>{profile.education}</dd>
-                </div>
-                <div>
-                  <dt>邮箱</dt>
-                  <dd>
-                    <a className="site-link break-all" href={`mailto:${profile.email}`}>{profile.email}</a>
-                  </dd>
-                </div>
-                <div>
-                  <dt>GitHub</dt>
-                  <dd>
-                    <ExternalLink href={profile.github}>allen-iwen</ExternalLink>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-        </Section>
-
-        {experience.length > 0 ? (
-          <Section id="experience" index={sectionIndex('experience')} title="经历">
-            <ol className="border-t border-line">
-              {experience.map((item) => (
-                <li key={`${item.time ?? ''}-${item.role ?? ''}-${item.org ?? ''}`} className="grid gap-2 border-b border-line py-6 md:grid-cols-12">
-                  <p className="text-sm text-muted md:col-span-3">{item.time}</p>
-                  <div className="md:col-span-9">
-                    <h3 className="serif text-3xl">{item.role}</h3>
-                    {item.org ? <p className="mt-1 text-muted">{item.org}</p> : null}
-                    {item.summary ? <p className="mt-3 leading-8">{item.summary}</p> : null}
-                    {item.points?.length ? (
-                      <ul className="fact-list">
-                        {item.points.map((point) => (
-                          <li key={point}>{point}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Section>
+          </section>
         ) : null}
 
-        <Section id="projects" index={sectionIndex('projects')} title="作品" intro={profile.projectsIntro}>
-          <div className="filters" role="group" aria-label="按类别筛选作品">
-            <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'is-on' : ''} onClick={() => setFilter('all')}>
-              全部
-              <span>{projects.length}</span>
-            </button>
+        <section className="section" id="projects" aria-labelledby="projects-title">
+          <div className="wrap">
+            <p className="section-kicker">{sectionIndex('projects')}</p>
+            <div className="section-head">
+              <h2 id="projects-title">作品</h2>
+            </div>
+            <p className="intro">{profile.projectsIntro}</p>
+            <div className="filters" role="group" aria-label="按类别筛选作品">
+              <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'is-on' : ''} onClick={() => setFilter('all')}>
+                全部 {projects.length}
+              </button>
+              {groups.map((group) => {
+                const count = projects.filter((project) => project.group === group.id).length
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    aria-pressed={filter === group.id}
+                    className={filter === group.id ? 'is-on' : ''}
+                    onClick={() => setFilter(group.id)}
+                  >
+                    {group.label} {count}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="sr-only" aria-live="polite">当前显示 {visibleCount} 件作品</p>
             {groups.map((group) => {
-              const count = projects.filter((project) => project.group === group.id).length
+              if (filter !== 'all' && filter !== group.id) return null
+              const items = projects.filter((project) => project.group === group.id)
               return (
-                <button
-                  key={group.id}
-                  type="button"
-                  aria-pressed={filter === group.id}
-                  className={filter === group.id ? 'is-on' : ''}
-                  onClick={() => setFilter(group.id)}
-                >
-                  {group.label}
-                  <span>{count}</span>
-                </button>
-              )
-            })}
-          </div>
-          <p className="sr-only" aria-live="polite">当前显示 {visibleCount} 件作品</p>
-
-          {groups.map((group) => {
-            if (filter !== 'all' && filter !== group.id) return null
-            const items = projects.filter((project) => project.group === group.id)
-            return (
-              <div key={group.id} className="mt-12 first:mt-0">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="serif text-2xl md:text-3xl">{group.label}</h3>
-                  <p className="text-sm text-muted">{items.length} 个项目</p>
-                </div>
-                <div className="mt-4 border-t border-line">
+                <div key={group.id}>
+                  <div className="group-label">
+                    <h3>{group.label}</h3>
+                    <span>{items.length} 个项目</span>
+                  </div>
                   {items.map((project) => (
-                    <article key={project.id} id={project.id} className="project" aria-labelledby={`${project.id}-title`}>
-                      <div className="grid gap-3 md:grid-cols-[4.5rem_1fr] md:gap-8">
-                        <p className="serif text-3xl text-cinnabar md:text-4xl">{pad(projects.findIndex((item) => item.id === project.id))}</p>
-                        <div className="min-w-0">
-                          <p className="text-sm text-muted">{project.category}</p>
-                          <h4 id={`${project.id}-title`} className="serif mt-1 text-[clamp(1.7rem,3vw,2.7rem)] leading-tight tracking-[-0.03em]">
-                            {project.title}
-                          </h4>
-                          <p className="mt-4 max-w-3xl text-base leading-8 md:text-lg">{project.summary}</p>
-                          <Highlights items={project.highlights} />
-                          <p className="tech">{project.tech.join('  ·  ')}</p>
-                          {project.links?.length ? (
-                            <ul className="link-row">
-                              {project.links.map((link) => (
-                                <li key={link.href}>
-                                  <ExternalLink href={link.href}>{link.label}</ExternalLink>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </div>
+                    <article key={project.id} id={project.id} className="work" aria-labelledby={`${project.id}-title`}>
+                      <p className="work-cat">{project.category}</p>
+                      <div>
+                        <h3 id={`${project.id}-title`}>{project.title}</h3>
+                        <p className="work-summary">{project.summary}</p>
+                        <Points items={project.highlights} />
+                        <p className="work-tech">{project.tech.join('  ·  ')}</p>
+                        {project.links?.length ? (
+                          <ul className="work-links">
+                            {project.links.map((link) => (
+                              <li key={link.href}>
+                                <ExternalLink href={link.href}>{link.label}</ExternalLink>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </div>
                     </article>
                   ))}
                 </div>
-              </div>
-            )
-          })}
-        </Section>
+              )
+            })}
+          </div>
+        </section>
 
         {writing.length > 0 ? (
-          <Section id="writing" index={sectionIndex('writing')} title="文字">
-            <ol className="border-t border-line">
-              {writing.map((item) => (
-                <li key={item.title} className="border-b border-line py-6">
-                  <div className="flex flex-wrap items-baseline justify-between gap-3">
-                    <h3 className="serif text-3xl">
+          <section className="section" id="writing" aria-labelledby="writing-title">
+            <div className="wrap">
+              <p className="section-kicker">{sectionIndex('writing')}</p>
+              <div className="section-head">
+                <h2 id="writing-title">文字</h2>
+              </div>
+              <ol className="writing-list">
+                {writing.map((item) => (
+                  <li key={item.title}>
+                    <h3>
                       {item.href ? <ExternalLink href={item.href}>{item.title}</ExternalLink> : item.title}
                     </h3>
-                    {item.date ? <p className="text-sm text-muted">{item.date}</p> : null}
-                  </div>
-                  {item.summary ? <p className="mt-3 max-w-3xl leading-8">{item.summary}</p> : null}
-                </li>
-              ))}
-            </ol>
-          </Section>
+                    {item.date ? <p className="when">{item.date}</p> : null}
+                    {item.summary ? <p className="work-summary">{item.summary}</p> : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
         ) : null}
 
-        <Section id="skills" index={sectionIndex('skills')} title="技能">
-          <div>
-            {skillGroups.map((group) => (
-              <div key={group.label} className="skill-row">
-                <h3 className="serif text-xl">{group.label}</h3>
-                <p className="text-lg leading-8">{group.items.join('  ·  ')}</p>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Section id="code" index={sectionIndex('code')} title="代码" intro={profile.codeIntro}>
-          <div className="grid gap-5 lg:grid-cols-2">
-            {codeExamples.map((example) => (
-              <figure key={example.title} className="ink-slab">
-                <header>
-                  <h3 className="serif text-xl">{example.title}</h3>
-                  <span className="font-mono text-sm text-paper/70">{example.language}</span>
-                </header>
-                <pre><code>{example.code}</code></pre>
-              </figure>
-            ))}
-          </div>
-        </Section>
-
-        <Section id="contact" index={sectionIndex('contact')} title="联系" intro={profile.contactIntro}>
-          <div className="grid gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <a className="contact-mail serif site-link" href={`mailto:${profile.email}`}>{profile.email}</a>
-              <p className="mt-6 text-lg">{profile.location}</p>
+        <section className="section" id="skills" aria-labelledby="skills-title">
+          <div className="wrap">
+            <p className="section-kicker">{sectionIndex('skills')}</p>
+            <div className="section-head">
+              <h2 id="skills-title">技能</h2>
             </div>
-            <p className="text-lg lg:col-span-4 lg:pt-4">
-              <ExternalLink href={profile.github}>GitHub</ExternalLink>
-            </p>
+            <div className="skill-list">
+              {skillGroups.map((group) => (
+                <div className="skill-row" key={group.label}>
+                  <h3>{group.label}</h3>
+                  <p>{group.items.join('  ·  ')}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </Section>
+        </section>
+
+        <section className="section" id="code" aria-labelledby="code-title">
+          <div className="wrap">
+            <p className="section-kicker">{sectionIndex('code')}</p>
+            <div className="section-head">
+              <h2 id="code-title">代码</h2>
+            </div>
+            <p className="intro">{profile.codeIntro}</p>
+            <div className="code-grid">
+              {codeExamples.map((example) => (
+                <figure className="note" key={example.title}>
+                  <header>
+                    <h3>{example.title}</h3>
+                    <span>{example.language}</span>
+                  </header>
+                  <pre><code>{example.code}</code></pre>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section" id="contact" aria-labelledby="contact-title">
+          <div className="wrap">
+            <p className="section-kicker">{sectionIndex('contact')}</p>
+            <div className="section-head">
+              <h2 id="contact-title">联系</h2>
+            </div>
+            <p className="intro">{profile.contactIntro}</p>
+            <div className="contact-layout">
+              <div>
+                <a className="contact-mail text-link" href={`mailto:${profile.email}`}>{profile.email}</a>
+                <p className="contact-meta">{profile.location}</p>
+              </div>
+              <p className="contact-meta">
+                <ExternalLink href={profile.github}>GitHub</ExternalLink>
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-[76rem] flex-col gap-4 px-5 py-8 text-sm text-muted md:flex-row md:items-center md:justify-between md:px-8">
+      <footer className="site-footer">
+        <div className="wrap footer-inner">
           <p>© 2026 王同鹤</p>
-          <p className="flex flex-wrap gap-x-6 gap-y-2">
-            <a className="site-link" href={`mailto:${profile.email}`}>邮箱</a>
+          <button type="button" className="motion-toggle" aria-pressed={!motionOn} onClick={toggleMotion}>
+            {motionOn ? '静止动效' : '恢复动效'}
+          </button>
+          <p className="footer-links">
+            <a className="text-link" href={`mailto:${profile.email}`}>邮箱</a>
             <ExternalLink href={profile.github}>GitHub</ExternalLink>
-            <a className="site-link" href="#top">回到页首</a>
+            <a className="text-link" href="#top">回到页首</a>
           </p>
         </div>
       </footer>
