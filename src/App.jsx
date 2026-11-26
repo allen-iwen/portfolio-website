@@ -1,1030 +1,441 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button.jsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { 
-  Github, 
-  Linkedin, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Download,
-  ExternalLink,
-  Code,
-  Database,
-  Brain,
-  BarChart3,
-  ChevronDown,
-  Menu,
-  X,
-  Terminal,
-  Zap,
-  Cpu,
-  Globe
-} from 'lucide-react'
-import heroBackground from './assets/blue_tech_hero_background.png'
-import aiVisualization from './assets/blue_ai_visualization.png'
-import codeInterface from './assets/blue_code_interface.png'
-import flaskDashboard from './assets/flask_ecommerce_dashboard.png'
-import stockPrediction from './assets/stock_prediction_interface.png'
-import multiAgentPlatform from './assets/multi_agent_platform.png'
+import { useEffect, useRef, useState } from 'react'
+import {
+  codeExamples,
+  experience,
+  profile,
+  projects,
+  skillGroups,
+  strengths,
+  writing,
+} from './content.js'
 import './App.css'
 
+const sections = [
+  { id: 'about', label: '简介' },
+  ...(experience.length ? [{ id: 'experience', label: '经历' }] : []),
+  { id: 'projects', label: '作品' },
+  ...(writing.length ? [{ id: 'writing', label: '文字' }] : []),
+  { id: 'skills', label: '技能' },
+  { id: 'code', label: '代码' },
+  { id: 'contact', label: '联系' },
+].map((item, index) => ({
+  ...item,
+  index: String(index + 1).padStart(2, '0'),
+}))
+
+const groups = []
+for (const project of projects) {
+  if (!groups.some((group) => group.id === project.group)) {
+    groups.push({ id: project.group, label: project.groupLabel })
+  }
+}
+
+function pad(index) {
+  return String(index + 1).padStart(2, '0')
+}
+
+function sectionIndex(id) {
+  return sections.find((section) => section.id === id)?.index ?? ''
+}
+
+function ExternalLink({ href, children }) {
+  return (
+    <a className="site-link" href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+      <span aria-hidden="true"> ↗</span>
+      <span className="sr-only">（在新标签页打开）</span>
+    </a>
+  )
+}
+
+function Highlights({ items }) {
+  const brief = items.every((item) => item.length <= 20)
+  return (
+    <ul className={brief ? 'marks' : 'fact-list'}>
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  )
+}
+
+function Section({ id, index, title, intro, children }) {
+  return (
+    <section id={id} className="section" aria-labelledby={`${id}-title`}>
+      <div className="mx-auto max-w-[76rem] px-5 py-16 md:px-8 md:py-24">
+        <h2 id={`${id}-title`} className="serif section-title">
+          <span className="section-index">{index}</span>
+          {title}
+        </h2>
+        {intro ? <p className="mt-6 max-w-2xl text-base leading-8 text-muted md:text-lg">{intro}</p> : null}
+        <div className={intro ? 'mt-12 md:mt-14' : 'mt-10'}>{children}</div>
+      </div>
+    </section>
+  )
+}
+
 function App() {
-  const [activeSection, setActiveSection] = useState('home')
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [isTyping, setIsTyping] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState('')
+  const [filter, setFilter] = useState('all')
+  const menuButtonRef = useRef(null)
 
-  // 鼠标跟踪效果
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
+    let frame = 0
+    const update = () => {
+      frame = 0
+      let current = ''
+      for (const section of sections) {
+        const element = document.getElementById(section.id)
+        if (!element) continue
+        if (element.getBoundingClientRect().top <= 100) current = section.id
+      }
+      setActiveSection(current)
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
   }, [])
 
-  // 打字机效果
-  const [displayText, setDisplayText] = useState('')
-  const fullText = '全栈开发工程师 · AI算法工程师 · 数据分析师 · BI报表设计工程师'
-  
   useEffect(() => {
-    let index = 0
-    const timer = setInterval(() => {
-      if (index < fullText.length) {
-        setDisplayText(fullText.slice(0, index + 1))
-        index++
-      } else {
-        setIsTyping(false)
-        clearInterval(timer)
+    if (!menuOpen) return undefined
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        menuButtonRef.current?.focus({ preventScroll: true })
       }
-    }, 100)
-    return () => clearInterval(timer)
-  }, [])
-
-  // 项目数据
-  const projects = {
-    web: [
-      {
-        title: "Flask电商后台管理系统",
-        description: "完整的电商后台管理系统，支持商品管理、订单处理、用户管理等核心业务功能",
-        tech: ["Flask", "MySQL", "Vue.js", "Redis", "JWT"],
-        highlights: ["RESTful API架构", "RBAC权限管理", "响应时间提升40%"],
-        image: flaskDashboard,
-        category: "全栈开发",
-        githubUrl: "https://github.com/allen-iwen/flask-ecommerce-admin"
-      },
-      {
-        title: "Tornado高并发论坛系统",
-        description: "基于Tornado异步框架的高并发论坛系统，支持实时聊天、帖子管理、用户互动等功能",
-        tech: ["Tornado", "MongoDB", "WebSocket", "Vue.js"],
-        highlights: ["万级并发连接", "WebSocket实时消息推送", "MongoDB查询优化", "完整REST API"],
-        image: codeInterface,
-        category: "全栈开发",
-        githubUrl: "https://github.com/allen-iwen/Tornado-Project",
-        demoUrl: "https://allen-iwen.github.io/Tornado-Project/"
-      },
-      {
-        title: "Django在线教育平台",
-        description: "功能完整的在线教育平台，包含用户管理、课程管理、支付系统等核心功能",
-        tech: ["Django", "Python", "HTML/CSS/JS"],
-        highlights: ["完整的教育业务流程", "支付系统集成"],
-        image: codeInterface,
-        category: "Web开发",
-        githubUrl: "https://github.com/your-username/django-online-education"
-      }
-    ],
-    ai: [
-      {
-        title: "智能工单预测系统",
-        description: "基于BERT+XGBoost双模型融合的智能解决方案预测系统",
-        tech: ["BERT", "XGBoost", "Python", "JIRA API"],
-        highlights: ["准确率87.3%", "响应时间165ms", "工单处理效率提升60%"],
-        image: aiVisualization,
-        category: "AI系统",
-        githubUrl: "https://github.com/your-username/issue-resolution-predictor"
-      },
-      {
-        title: "多Agent协同数据分析平台",
-        description: "设计了多Agent协作架构，集成豆包、通义千问、DeepSeek三种大模型；构建数据清洗Agent、统计分析Agent、报告生成Agent的端到端自动化协同工作流；支持CSV/Excel/JSON多格式的数据处理管线，提供交互式Web界面实现实时分析与可视化。",
-        tech: ["Python", "异步编程", "豆包", "通义千问", "DeepSeek", "Pandas", "Matplotlib", "Plotly", "Streamlit"],
-        highlights: [
-          "多Agent协作架构，模型间任务编排与上下文共享",
-          "支持CSV/Excel/JSON的自动化处理流水线",
-          "交互式Web界面，支持实时数据分析与可视化展示",
-          "异步并发优化多模型调用，处理效率提升60%",
-          "智能数据清洗算法，自动识别并修复数据质量问题",
-          "集成Matplotlib与Plotly，生成专业分析报告"
-        ],
-        image: multiAgentPlatform,
-        category: "AI系统",
-        githubUrl: "https://github.com/allen-iwen/multi-agent-data-analysis.git"
-      },
-      {
-        title: "股票短线精灵",
-        description: "使用LSTM+XGBoost融合模型的股票短线预测系统",
-        tech: ["LSTM", "XGBoost", "Python", "金融数据API"],
-        highlights: ["预测准确率68%", "实时预测", "量化交易策略"],
-        image: stockPrediction,
-        category: "金融科技",
-        githubUrl: "https://github.com/your-username/stock-short-term-predictor"
-      }
-    ]
-  }
-
-  // 技能数据
-  const skills = {
-    backend: ["Python", "Flask", "Django", "FastAPI", "MySQL", "Redis", "RESTful API"],
-    frontend: ["Vue.js", "React", "HTML/CSS/JS", "Tailwind CSS", "响应式设计"],
-    ai: ["PyTorch", "TensorFlow", "BERT", "XGBoost", "LSTM", "计算机视觉", "NLP"],
-    data: ["Pandas", "NumPy", "Matplotlib", "Plotly", "Streamlit", "数据挖掘"],
-    bi: ["数据可视化", "报表设计", "商业智能", "数据分析", "指标体系"],
-    tools: ["Docker", "Git", "SQL", "JIRA API", "金融数据API", "Linux"]
-  }
-
-  // 代码展示数据
-  const codeExamples = [
-    {
-      title: "Flask API 路由",
-      language: "python",
-      code: `@app.route('/api/users', methods=['GET', 'POST'])
-@jwt_required()
-def handle_users():
-    if request.method == 'POST':
-        data = request.get_json()
-        user = User(**data)
-        db.session.add(user)
-        db.session.commit()
-        return jsonify(user.to_dict()), 201
-    return jsonify([u.to_dict() for u in User.query.all()])`
-    },
-    {
-      title: "AI模型预测",
-      language: "python", 
-      code: `def predict_stock_price(model, data):
-    # 数据预处理
-    scaled_data = scaler.transform(data)
-    
-    # LSTM预测
-    lstm_pred = lstm_model.predict(scaled_data)
-    
-    # XGBoost预测
-    xgb_pred = xgb_model.predict(scaled_data)
-    
-    # 模型融合
-    final_pred = 0.6 * lstm_pred + 0.4 * xgb_pred
-    return final_pred`
     }
-  ]
-
-  const scrollToSection = (sectionId) => {
-    setActiveSection(sectionId)
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
     }
-    setIsMenuOpen(false)
-  }
+  }, [menuOpen])
+
+  const visibleCount = projects.filter((project) => filter === 'all' || project.group === filter).length
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
-      {/* 动态鼠标跟踪光效 */}
-      <div 
-        className="fixed pointer-events-none z-10 w-96 h-96 rounded-full opacity-20"
-        style={{
-          background: `radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)`,
-          left: mousePosition.x - 192,
-          top: mousePosition.y - 192,
-          transition: 'all 0.1s ease-out'
-        }}
-      />
+    <div>
+      <a className="skip-link" href="#content">跳到主要内容</a>
 
-      {/* 浮动粒子背景 */}
-      <div className="fixed inset-0 z-0">
-        {[...Array(50)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-400 rounded-full"
-            animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              opacity: [0, 1, 0]
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 2
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* 导航栏 */}
-      <motion.nav 
-        className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-blue-500/20"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <motion.div 
-              className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent"
-              whileHover={{ scale: 1.05 }}
-            >
-              王同鹤
-            </motion.div>
-            
-            {/* 桌面导航 */}
-            <div className="hidden md:flex space-x-8">
-              {[
-                { id: 'home', label: '首页' },
-                { id: 'about', label: '关于我' },
-                { id: 'projects', label: '项目' },
-                { id: 'code', label: '代码' },
-                { id: 'contact', label: '联系' }
-              ].map((item) => (
-                <motion.button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeSection === item.id 
-                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
-                      : 'text-gray-300 hover:text-blue-400 hover:bg-blue-500/10'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {item.label}
-                </motion.button>
-              ))}
-            </div>
-
-            {/* 移动端菜单按钮 */}
-            <motion.button
-              className="md:hidden p-2 rounded-lg bg-blue-500/20 text-blue-400"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              whileTap={{ scale: 0.95 }}
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </motion.button>
-          </div>
-        </div>
-
-        {/* 移动端菜单 */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              className="md:hidden bg-slate-800/95 backdrop-blur-md border-t border-blue-500/20"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <div className="px-4 py-4 space-y-2">
-                {[
-                  { id: 'home', label: '首页' },
-                  { id: 'about', label: '关于我' },
-                  { id: 'projects', label: '项目' },
-                  { id: 'code', label: '代码' },
-                  { id: 'contact', label: '联系' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToSection(item.id)}
-                    className="block w-full text-left px-4 py-2 rounded-lg text-gray-300 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-300"
+      <header className="site-header">
+        <div className="mx-auto flex h-full max-w-[76rem] items-center justify-between px-5 md:px-8">
+          <a href="#top" className="serif text-xl tracking-[-0.03em]">王同鹤</a>
+          <nav className="hidden lg:block" aria-label="页面章节">
+            <ul className="flex gap-7">
+              {sections.map((section) => (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    className={activeSection === section.id ? 'nav-link is-on' : 'nav-link'}
+                    aria-current={activeSection === section.id ? 'location' : undefined}
                   >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.nav>
-
-      {/* 主页Hero区域 */}
-      <section id="home" className="min-h-screen flex items-center justify-center relative">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
-          style={{ backgroundImage: `url(${heroBackground})` }}
-        />
-        <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+                    {section.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <button
+            ref={menuButtonRef}
+            type="button"
+            className="menu-button lg:hidden"
+            aria-expanded={menuOpen}
+            aria-controls="site-menu"
+            onClick={() => setMenuOpen((open) => !open)}
           >
-            <motion.h1 
-              className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-600 bg-clip-text text-transparent"
-              animate={{ 
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            >
+            {menuOpen ? '关闭' : '目录'}
+          </button>
+        </div>
+      </header>
+
+      {menuOpen ? (
+        <nav id="site-menu" className="menu-panel" aria-label="页面章节">
+          <ul>
+            {sections.map((section) => (
+              <li key={section.id}>
+                <a
+                  className="menu-link"
+                  href={`#${section.id}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span>{section.label}</span>
+                  <span className="font-mono text-sm font-normal text-cinnabar">{section.index}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
+      <main id="content">
+        <section id="top" aria-labelledby="masthead">
+          <div className="mx-auto max-w-[76rem] px-5 pb-8 pt-8 md:px-8 md:pb-10 md:pt-14">
+            <p className="eyebrow">作品集</p>
+            <h1 id="masthead" className="mast mt-3 whitespace-nowrap">
               王同鹤
-            </motion.h1>
-            
-            <motion.div 
-              className="text-xl md:text-2xl text-gray-300 mb-8 h-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {displayText}
-              {isTyping && <span className="animate-pulse">|</span>}
-            </motion.div>
-            
-            <motion.p 
-              className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              跨专业技术人才，从化学到代码的创新者。拥有全栈开发、AI算法、数据分析、BI报表等多重技能，
-              专注于用技术解决实际问题，创造商业价值。具备扎实的技术基础和丰富的项目经验。
-            </motion.p>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2 }}
-            >
-              <motion.button
-                onClick={() => scrollToSection('projects')}
-                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Zap size={20} />
-                <span>查看项目</span>
-              </motion.button>
-              
-              <motion.button
-                onClick={() => scrollToSection('contact')}
-                className="px-8 py-4 border-2 border-blue-500 rounded-lg font-semibold text-blue-400 hover:bg-blue-500/10 transition-all duration-300 flex items-center justify-center space-x-2"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Mail size={20} />
-                <span>联系我</span>
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* 滚动指示器 */}
-        <motion.div 
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <ChevronDown size={32} className="text-blue-400" />
-        </motion.div>
-      </section>
-
-      {/* 关于我部分 */}
-      <section id="about" className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              关于我
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              我是一名充满热情的开发者，拥有多维度的技能图谱。从化学专业成功转向技术领域，
-              具备快速学习新技术和解决复杂问题的能力。
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* 个人信息 */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-blue-400 flex items-center space-x-2">
-                    <Cpu size={24} />
-                    <span>个人信息</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <MapPin size={20} className="text-blue-400" />
-                    <span className="text-gray-300">华东理工大学 · 化学专业</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone size={20} className="text-blue-400" />
-                    <span className="text-gray-300">17358184133</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Mail size={20} className="text-blue-400" />
-                    <span className="text-gray-300">17358184133@163.com</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 核心优势 */}
-              <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm mt-6">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-blue-400 flex items-center space-x-2">
-                    <Zap size={24} />
-                    <span>核心优势</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 text-gray-300">
-                    <li className="flex items-start space-x-2">
-                      <span className="text-blue-400 mt-1">✅</span>
-                      <span><strong>扎实的技术基础</strong>：从机器学习到Web开发，技术栈全面</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-blue-400 mt-1">✅</span>
-                      <span><strong>丰富的项目经验</strong>：每个项目都有独特的技术亮点和业务价值</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-blue-400 mt-1">✅</span>
-                      <span><strong>多重身份技能</strong>：全栈、AI、数据分析、BI报表全覆盖</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-blue-400 mt-1">✅</span>
-                      <span><strong>跨专业转型</strong>：化学专业成功转向技术领域的学习能力</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-blue-400 mt-1">✅</span>
-                      <span><strong>实战经验足</strong>：多个上线项目和远程工作经历</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* 技能矩阵 */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="space-y-6"
-            >
-              <h3 className="text-2xl font-bold text-blue-400 mb-6">技能矩阵</h3>
-              
-              {Object.entries(skills).map(([category, skillList], index) => (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="bg-slate-800/30 rounded-lg p-4 border border-blue-500/20"
-                >
-                  <h4 className="text-lg font-semibold text-blue-400 mb-3 capitalize">
-                    {category === 'backend' ? '后端开发' :
-                     category === 'frontend' ? '前端开发' :
-                     category === 'ai' ? 'AI算法' :
-                     category === 'data' ? '数据分析' : 
-                     category === 'bi' ? 'BI报表' : '工具技术'}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {skillList.map((skill, skillIndex) => (
-                      <motion.span
-                        key={skill}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: skillIndex * 0.05 }}
-                        viewport={{ once: true }}
-                        whileHover={{ scale: 1.1 }}
-                        className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/30 hover:bg-blue-500/30 transition-all duration-300"
-                      >
-                        {skill}
-                      </motion.span>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+              <span className="seal" aria-hidden="true" />
+            </h1>
           </div>
-        </div>
-      </section>
 
-      {/* 项目展示部分 */}
-      <section id="projects" className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              项目展示
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              以下是我参与开发的一些代表性项目，涵盖全栈开发、机器学习和数据分析等领域
-            </p>
-          </motion.div>
+          <div className="ribbon">
+            <ul aria-label="专业方向">
+              {profile.roles.map((role, index) => (
+                <li key={role}>
+                  {index > 0 ? <span aria-hidden="true">/</span> : null}
+                  {role}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          {/* 全栈Web开发项目 */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="mb-16"
-          >
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <Code className="w-6 h-6 text-white" />
+          <div className="mx-auto grid max-w-[76rem] gap-10 px-5 py-10 md:px-8 md:py-14 lg:grid-cols-12 lg:gap-16">
+            <div className="lg:col-span-6">
+              <p className="lead max-w-xl">{profile.summary}</p>
+              <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 text-lg">
+                <a className="stamp" href="#projects">查看作品</a>
+                <a className="site-link" href="#contact">联系</a>
               </div>
-              <h3 className="text-2xl font-bold text-white">全栈Web开发</h3>
-              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">{projects.web.length} 个项目</Badge>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {projects.web.map((project, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -5 }}
-                  className="group"
-                >
-                  {project.demoUrl ? (
-                    <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={project.image} 
-                          alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                        <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
-                          {project.category}
-                        </Badge>
-                        <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ExternalLink className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
-                          {project.title}
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          {project.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {project.tech.map((tech, techIndex) => (
-                                <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
-                                  {tech}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
-                            <ul className="text-sm text-gray-400 space-y-1">
-                              {project.highlights.map((highlight, highlightIndex) => (
-                                <li key={highlightIndex} className="flex items-start space-x-2">
-                                  <span className="text-blue-400 mt-1">•</span>
-                                  <span>{highlight}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="pt-2 flex flex-wrap gap-3">
-                            {project.demoUrl && (
-                              <a
-                                href={project.demoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-2 rounded-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border border-blue-500/30 transition"
-                                aria-label={`打开 ${project.title} 的在线预览`}
-                              >
-                                <Globe className="w-4 h-4 mr-2" /> 在线预览
-                              </a>
-                            )}
-                            {project.githubUrl && (
-                              <a
-                                href={project.githubUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-2 rounded-md bg-slate-700/40 text-gray-200 hover:bg-slate-700/60 border border-slate-600/50 transition"
-                                aria-label={`打开 ${project.title} 的 GitHub 仓库`}
-                              >
-                                <Github className="w-4 h-4 mr-2" /> GitHub
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : project.githubUrl ? (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg"
-                      aria-label={`打开 ${project.title} 的 GitHub 仓库`}
-                    >
-                      <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden cursor-pointer">
-                        <div className="relative h-48 overflow-hidden">
-                          <img 
-                            src={project.image} 
-                            alt={project.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                          <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
-                            {project.category}
-                          </Badge>
-                          <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                        <CardHeader>
-                          <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
-                            {project.title}
-                          </CardTitle>
-                          <CardDescription className="text-gray-400">
-                            {project.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div>
-                              <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
-                              <div className="flex flex-wrap gap-2">
-                                {project.tech.map((tech, techIndex) => (
-                                  <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
-                                    {tech}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
-                              <ul className="text-sm text-gray-400 space-y-1">
-                                {project.highlights.map((highlight, highlightIndex) => (
-                                  <li key={highlightIndex} className="flex items-start space-x-2">
-                                    <span className="text-blue-400 mt-1">•</span>
-                                    <span>{highlight}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+            <nav className="lg:col-span-6" aria-label="作品目录">
+              <p className="eyebrow">目录</p>
+              <ol className="mt-3 border-t border-line">
+                {projects.map((project, index) => (
+                  <li key={project.id}>
+                    <a className="index-link" href={`#${project.id}`}>
+                      <span className="serif w-8 shrink-0 text-cinnabar">{pad(index)}</span>
+                      <span className="index-title min-w-0 flex-1 text-lg leading-snug">{project.title}</span>
                     </a>
-                  ) : (
-                    <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={project.image} 
-                          alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                        <Badge className="absolute top-4 right-4 bg-blue-500/80 text-white">
-                          {project.category}
-                        </Badge>
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="text-xl text-blue-400 group-hover:text-blue-300 transition-colors">
-                          {project.title}
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          {project.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <h5 className="text-sm font-semibold text-blue-400 mb-2">技术栈</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {project.tech.map((tech, techIndex) => (
-                                <Badge key={techIndex} variant="outline" className="text-xs border-blue-500/30 text-blue-300">
-                                  {tech}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="text-sm font-semibold text-blue-400 mb-2">项目亮点</h5>
-                            <ul className="text-sm text-gray-400 space-y-1">
-                              {project.highlights.map((highlight, highlightIndex) => (
-                                <li key={highlightIndex} className="flex items-start space-x-2">
-                                  <span className="text-blue-400 mt-1">•</span>
-                                  <span>{highlight}</span>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </div>
+
+          <dl className="fact-grid mx-auto max-w-[76rem]">
+            <div>
+              <dt>教育</dt>
+              <dd>{profile.education}</dd>
+            </div>
+            <div>
+              <dt>邮箱</dt>
+              <dd>
+                <a className="site-link break-all" href={`mailto:${profile.email}`}>{profile.email}</a>
+              </dd>
+            </div>
+            <div>
+              <dt>作品</dt>
+              <dd>
+                <a className="serif text-4xl leading-none tracking-[-0.04em]" href="#projects">
+                  {pad(projects.length - 1)}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <Section id="about" index={sectionIndex('about')} title="简介">
+          <p className="serif max-w-4xl text-[clamp(1.55rem,3vw,2.2rem)] leading-snug">{profile.about}</p>
+          <div className="mt-12 grid gap-12 lg:grid-cols-12 lg:gap-16">
+            <div className="lg:col-span-7">
+              <h3 className="eyebrow">核心优势</h3>
+              <ol className="mt-4">
+                {strengths.map((item, index) => (
+                  <li key={item.title} className="strength">
+                    <span className="serif text-cinnabar">{pad(index)}</span>
+                    <p className="leading-8">
+                      <strong className="serif text-2xl">{item.title}</strong>
+                      <span className="text-muted">：{item.detail}</span>
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div className="lg:col-span-5">
+              <h3 className="eyebrow">个人信息</h3>
+              <dl className="info-list mt-4">
+                <div>
+                  <dt>教育</dt>
+                  <dd>{profile.education}</dd>
+                </div>
+                <div>
+                  <dt>邮箱</dt>
+                  <dd>
+                    <a className="site-link break-all" href={`mailto:${profile.email}`}>{profile.email}</a>
+                  </dd>
+                </div>
+                <div>
+                  <dt>GitHub</dt>
+                  <dd>
+                    <ExternalLink href={profile.github}>allen-iwen</ExternalLink>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </Section>
+
+        {experience.length > 0 ? (
+          <Section id="experience" index={sectionIndex('experience')} title="经历">
+            <ol className="border-t border-line">
+              {experience.map((item) => (
+                <li key={`${item.time ?? ''}-${item.role ?? ''}-${item.org ?? ''}`} className="grid gap-2 border-b border-line py-6 md:grid-cols-12">
+                  <p className="text-sm text-muted md:col-span-3">{item.time}</p>
+                  <div className="md:col-span-9">
+                    <h3 className="serif text-3xl">{item.role}</h3>
+                    {item.org ? <p className="mt-1 text-muted">{item.org}</p> : null}
+                    {item.summary ? <p className="mt-3 leading-8">{item.summary}</p> : null}
+                    {item.points?.length ? (
+                      <ul className="fact-list">
+                        {item.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Section>
+        ) : null}
+
+        <Section id="projects" index={sectionIndex('projects')} title="作品" intro={profile.projectsIntro}>
+          <div className="filters" role="group" aria-label="按类别筛选作品">
+            <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'is-on' : ''} onClick={() => setFilter('all')}>
+              全部
+              <span>{projects.length}</span>
+            </button>
+            {groups.map((group) => {
+              const count = projects.filter((project) => project.group === group.id).length
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  aria-pressed={filter === group.id}
+                  className={filter === group.id ? 'is-on' : ''}
+                  onClick={() => setFilter(group.id)}
+                >
+                  {group.label}
+                  <span>{count}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="sr-only" aria-live="polite">当前显示 {visibleCount} 件作品</p>
+
+          {groups.map((group) => {
+            if (filter !== 'all' && filter !== group.id) return null
+            const items = projects.filter((project) => project.group === group.id)
+            return (
+              <div key={group.id} className="mt-12 first:mt-0">
+                <div className="flex items-baseline justify-between gap-4">
+                  <h3 className="serif text-2xl md:text-3xl">{group.label}</h3>
+                  <p className="text-sm text-muted">{items.length} 个项目</p>
+                </div>
+                <div className="mt-4 border-t border-line">
+                  {items.map((project) => (
+                    <article key={project.id} id={project.id} className="project" aria-labelledby={`${project.id}-title`}>
+                      <div className="grid gap-3 md:grid-cols-[4.5rem_1fr] md:gap-8">
+                        <p className="serif text-3xl text-cinnabar md:text-4xl">{pad(projects.findIndex((item) => item.id === project.id))}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm text-muted">{project.category}</p>
+                          <h4 id={`${project.id}-title`} className="serif mt-1 text-[clamp(1.7rem,3vw,2.7rem)] leading-tight tracking-[-0.03em]">
+                            {project.title}
+                          </h4>
+                          <p className="mt-4 max-w-3xl text-base leading-8 md:text-lg">{project.summary}</p>
+                          <Highlights items={project.highlights} />
+                          <p className="tech">{project.tech.join('  ·  ')}</p>
+                          {project.links?.length ? (
+                            <ul className="link-row">
+                              {project.links.map((link) => (
+                                <li key={link.href}>
+                                  <ExternalLink href={link.href}>{link.label}</ExternalLink>
                                 </li>
                               ))}
                             </ul>
-                          </div>
+                          ) : null}
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* AI与机器学习项目 */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-white">AI与机器学习</h3>
-              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">{projects.ai.length} 个项目</Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.ai.map((project, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -5 }}
-                  className="group"
-                >
-                  {project.githubUrl ? (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-lg"
-                      aria-label={`打开 ${project.title} 的 GitHub 仓库`}
-                    >
-                      <Card className="bg-slate-800/50 border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 overflow-hidden h-full cursor-pointer">
-                        <div className="relative h-48 overflow-hidden">
-                          <img 
-                            src={project.image} 
-                            alt={project.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                          <Badge className="absolute top-4 right-4 bg-purple-500/80 text-white">
-                            {project.category}
-                          </Badge>
-                          <div className="absolute top-4 left-4 bg-slate-900/60 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                        <CardHeader>
-                          <CardTitle className="text-xl text-purple-400 group-hover:text-purple-300 transition-colors">
-                            {project.title}
-                          </CardTitle>
-                          <CardDescription className="text-gray-400">
-                            {project.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div>
-                              <h5 className="text-sm font-semibold text-purple-400 mb-2">技术栈</h5>
-                              <div className="flex flex-wrap gap-2">
-                                {project.tech.map((tech, techIndex) => (
-                                  <Badge key={techIndex} variant="outline" className="text-xs border-purple-500/30 text-purple-300">
-                                    {tech}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <h5 className="text-sm font-semibold text-purple-400 mb-2">项目亮点</h5>
-                              <ul className="text-sm text-gray-400 space-y-1">
-                                {project.highlights.map((highlight, highlightIndex) => (
-                                  <li key={highlightIndex} className="flex items-start space-x-2">
-                                    <span className="text-purple-400 mt-1">•</span>
-                                    <span>{highlight}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </a>
-                  ) : (
-                    <Card className="bg-slate-800/50 border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 overflow-hidden h-full">
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={project.image} 
-                          alt={project.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-                        <Badge className="absolute top-4 right-4 bg-purple-500/80 text-white">
-                          {project.category}
-                        </Badge>
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="text-xl text-purple-400 group-hover:text-purple-300 transition-colors">
-                          {project.title}
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          {project.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <h5 className="text-sm font-semibold text-purple-400 mb-2">技术栈</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {project.tech.map((tech, techIndex) => (
-                                <Badge key={techIndex} variant="outline" className="text-xs border-purple-500/30 text-purple-300">
-                                  {tech}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="text-sm font-semibold text-purple-400 mb-2">项目亮点</h5>
-                            <ul className="text-sm text-gray-400 space-y-1">
-                              {project.highlights.map((highlight, highlightIndex) => (
-                                <li key={highlightIndex} className="flex items-start space-x-2">
-                                  <span className="text-purple-400 mt-1">•</span>
-                                  <span>{highlight}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </motion.div>
+            )
+          })}
+        </Section>
+
+        {writing.length > 0 ? (
+          <Section id="writing" index={sectionIndex('writing')} title="文字">
+            <ol className="border-t border-line">
+              {writing.map((item) => (
+                <li key={item.title} className="border-b border-line py-6">
+                  <div className="flex flex-wrap items-baseline justify-between gap-3">
+                    <h3 className="serif text-3xl">
+                      {item.href ? <ExternalLink href={item.href}>{item.title}</ExternalLink> : item.title}
+                    </h3>
+                    {item.date ? <p className="text-sm text-muted">{item.date}</p> : null}
+                  </div>
+                  {item.summary ? <p className="mt-3 max-w-3xl leading-8">{item.summary}</p> : null}
+                </li>
               ))}
+            </ol>
+          </Section>
+        ) : null}
+
+        <Section id="skills" index={sectionIndex('skills')} title="技能">
+          <div>
+            {skillGroups.map((group) => (
+              <div key={group.label} className="skill-row">
+                <h3 className="serif text-xl">{group.label}</h3>
+                <p className="text-lg leading-8">{group.items.join('  ·  ')}</p>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section id="code" index={sectionIndex('code')} title="代码" intro={profile.codeIntro}>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {codeExamples.map((example) => (
+              <figure key={example.title} className="ink-slab">
+                <header>
+                  <h3 className="serif text-xl">{example.title}</h3>
+                  <span className="font-mono text-sm text-paper/70">{example.language}</span>
+                </header>
+                <pre><code>{example.code}</code></pre>
+              </figure>
+            ))}
+          </div>
+        </Section>
+
+        <Section id="contact" index={sectionIndex('contact')} title="联系" intro={profile.contactIntro}>
+          <div className="grid gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <a className="contact-mail serif site-link" href={`mailto:${profile.email}`}>{profile.email}</a>
+              <p className="mt-6 text-lg">{profile.location}</p>
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* 代码展示部分 */}
-      <section id="code" className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              代码展示
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              展示一些核心代码片段，体现技术实现能力和编程风格
+            <p className="text-lg lg:col-span-4 lg:pt-4">
+              <ExternalLink href={profile.github}>GitHub</ExternalLink>
             </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {codeExamples.map((example, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="group"
-              >
-                <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 overflow-hidden">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-blue-400 flex items-center space-x-2">
-                      <Terminal size={20} />
-                      <span>{example.title}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <pre className="bg-slate-900/80 rounded-lg p-4 overflow-x-auto text-sm">
-                        <code className="text-gray-300 whitespace-pre">
-                          {example.code}
-                        </code>
-                      </pre>
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-blue-500/20 text-blue-400 text-xs">
-                          {example.language}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
           </div>
-        </div>
-      </section>
+        </Section>
+      </main>
 
-      {/* 联系方式部分 */}
-      <section id="contact" className="py-20 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              联系我
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              如果您对我的项目感兴趣，或者有合作机会，欢迎随时联系我
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {[
-              { icon: Phone, title: "电话", content: "17358184133", color: "blue" },
-              { icon: Mail, title: "邮箱", content: "17358184133@163.com", color: "cyan" },
-              { icon: MapPin, title: "位置", content: "上海 · 华东理工大学", color: "purple" }
-            ].map((contact, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-              >
-                <Card className="bg-slate-800/50 border-blue-500/20 backdrop-blur-sm hover:border-blue-400/40 transition-all duration-300 text-center">
-                  <CardContent className="pt-8">
-                    <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-${contact.color}-500 to-${contact.color === 'blue' ? 'cyan' : contact.color === 'cyan' ? 'blue' : 'blue'}-500 rounded-full flex items-center justify-center`}>
-                      <contact.icon className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-blue-400 mb-2">{contact.title}</h3>
-                    <p className="text-gray-300">{contact.content}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="flex justify-center space-x-6"
-          >
-            {[
-              { icon: Download, label: "下载简历", color: "blue" },
-              { icon: Github, label: "GitHub", color: "purple" },
-              { icon: Linkedin, label: "LinkedIn", color: "cyan" }
-            ].map((social, index) => (
-              <motion.button
-                key={index}
-                whileHover={{ scale: 1.1, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-6 py-3 bg-gradient-to-r from-${social.color}-500 to-${social.color === 'blue' ? 'cyan' : social.color === 'cyan' ? 'blue' : 'blue'}-500 rounded-lg font-semibold text-white shadow-lg shadow-${social.color}-500/25 hover:shadow-${social.color}-500/40 transition-all duration-300 flex items-center space-x-2`}
-              >
-                <social.icon size={20} />
-                <span>{social.label}</span>
-              </motion.button>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* 页脚 */}
-      <footer className="py-8 border-t border-blue-500/20 bg-slate-900/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">
-            © 2025 王同鹤. All rights reserved. Made with ❤️ and React.
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-[76rem] flex-col gap-4 px-5 py-8 text-sm text-muted md:flex-row md:items-center md:justify-between md:px-8">
+          <p>© 2026 王同鹤</p>
+          <p className="flex flex-wrap gap-x-6 gap-y-2">
+            <a className="site-link" href={`mailto:${profile.email}`}>邮箱</a>
+            <ExternalLink href={profile.github}>GitHub</ExternalLink>
+            <a className="site-link" href="#top">回到页首</a>
           </p>
         </div>
       </footer>
@@ -1033,4 +444,3 @@ def handle_users():
 }
 
 export default App
-
